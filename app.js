@@ -1,3 +1,40 @@
+class Block {
+  constructor(width, height, x, y) {
+    this.width = width;
+    this.height = height;
+    this.x = x;
+    this.y = y;
+    this.maxX = width + x;
+    this.maxY = height + y;
+  }
+
+  draw(ctx) {
+    const xGap = 80;
+    const yGap = 60;
+
+    ctx.fillStyle = "#ff384e";
+    ctx.beginPath();
+    ctx.rect(this.x, this.y, this.width, this.height);
+    ctx.fill();
+
+    ctx.fillStyle = "#190f3a";
+    ctx.beginPath();
+    ctx.moveTo(this.maxX, this.maxY);
+    ctx.lineTo(this.maxX - xGap, this.maxY + yGap);
+    ctx.lineTo(this.x - xGap, this.maxY + yGap);
+    ctx.lineTo(this.x, this.maxY);
+    ctx.fill();
+
+    ctx.fillStyle = "#9d0919";
+    ctx.beginPath();
+    ctx.moveTo(this.x, this.y);
+    ctx.lineTo(this.x, this.maxY);
+    ctx.lineTo(this.x - xGap, this.maxY + yGap);
+    ctx.lineTo(this.x - xGap, this.maxY + yGap - this.height);
+    ctx.fill();
+  }
+}
+
 class Ball {
   constructor(stageWidth, stageHeight, radius, speed) {
     this.radius = radius;
@@ -9,13 +46,14 @@ class Ball {
     this.y = diameter + (Math.random() * stageHeight - diameter);
   }
 
-  draw(ctx, stageWidth, stageHeight) {
+  draw(ctx, stageWidth, stageHeight, block) {
     this.x += this.vx;
     this.y += this.vy;
 
     this.bounceWindow(stageWidth, stageHeight);
+    this.bounceBlock(block);
 
-    ctx.fillStyle = "#  ";
+    ctx.fillStyle = "#fdd700";
     ctx.beginPath();
     ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
     ctx.fill();
@@ -35,6 +73,31 @@ class Ball {
       this.y += this.vy;
     }
   }
+
+  bounceBlock(block) {
+    const minX = block.x - this.radius;
+    const maxX = block.maxX + this.radius;
+    const minY = block.y - this.radius;
+    const maxY = block.maxY + this.radius;
+
+    if (this.x > minX && this.x < maxX && this.y > minY && this.y < maxY) {
+      const x1 = Math.abs(minX - this.x);
+      const x2 = Math.abs(this.x - maxX);
+      const y1 = Math.abs(minY - this.y);
+      const y2 = Math.abs(this.y - maxY);
+      const min1 = Math.min(x1, x2);
+      const min2 = Math.min(y1, y2);
+      const min = Math.min(min1, min2);
+
+      if (min == min1) {
+        this.vx *= -1;
+        this.x += this.vx;
+      } else if (min == min2) {
+        this.vy *= -1;
+        this.y += this.vy;
+      }
+    }
+  }
 }
 
 class App {
@@ -48,6 +111,7 @@ class App {
     this.resize();
 
     this.ball = new Ball(this.stageWidth, this.stageHeight, 60, 15);
+    this.block = new Block(700, 30, 300, 450);
 
     window.requestAnimationFrame(this.animate.bind(this));
   }
@@ -66,7 +130,8 @@ class App {
 
     this.ctx.clearRect(0, 0, this.stageWidth, this.stageHeight);
 
-    this.ball.draw(this.ctx, this.stageWidth, this.stageHeight);
+    this.block.draw(this.ctx);
+    this.ball.draw(this.ctx, this.stageWidth, this.stageHeight, this.block);
   }
 }
 
